@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using AbrCivil.PlanStrip.Core.Geom;
 using AbrCivil.PlanStrip.Core.Model;
+using AbrCivil.PlanStrip.Core.Report;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 
@@ -17,7 +18,7 @@ namespace AbrCivil.PlanStrip.Cad
         public static ObjectId Build(
             Database db, Transaction tr, StripModel model,
             IList<FlexShape> flex, IList<RigidShape> rigid,
-            IList<Entity> decoration, Point3d insertPoint)
+            IList<Entity> decoration, Point3d insertPoint, IProgressSink sink)
         {
             var table = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
             string name = SafeName(model.BlockName);
@@ -36,8 +37,12 @@ namespace AbrCivil.PlanStrip.Cad
                 tr.AddNewlyCreatedDBObject(definition, true);
             }
 
+            sink.Begin("Отрисовка", flex.Count + decoration.Count);
+
             foreach (var shape in flex)
             {
+                sink.Tick();
+
                 var polyline = new Polyline();
                 for (int i = 0; i < shape.Points.Length; i++)
                     polyline.AddVertexAt(i, new Point2d(shape.Points[i].X, shape.Points[i].Y), 0.0, 0.0, 0.0);
@@ -51,9 +56,13 @@ namespace AbrCivil.PlanStrip.Cad
 
             foreach (var entity in decoration)
             {
+                sink.Tick();
+
                 definition.AppendEntity(entity);
                 tr.AddNewlyCreatedDBObject(entity, true);
             }
+
+            sink.End();
 
             return EnsureReference(db, tr, definition, name, insertPoint);
         }

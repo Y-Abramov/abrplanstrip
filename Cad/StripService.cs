@@ -12,7 +12,7 @@ namespace AbrCivil.PlanStrip.Cad
     /// Одна точка входа и для первой сборки, и для обновления.</summary>
     internal static class StripService
     {
-        public static HarvestReport Build(Database db, Transaction tr, StripModel model)
+        public static HarvestReport Build(Database db, Transaction tr, StripModel model, IProgressSink sink)
         {
             var report = new HarvestReport();
 
@@ -33,19 +33,23 @@ namespace AbrCivil.PlanStrip.Cad
             var flex = new List<FlexShape>();
             var rigid = new List<RigidShape>();
 
-            new EntityHarvester(line, frame, model.Settings, report).Harvest(db, tr, flex, rigid);
+            new EntityHarvester(line, frame, model.Settings, report, sink).Harvest(db, tr, flex, rigid);
 
             foreach (var fold in FoldDetector.Find(line, frame, 5.0)) report.Folds.Add(fold);
 
             var mapper = new ShapeMapper(line, frame, model.Settings);
-            var mappedFlex = mapper.MapFlex(flex, report);
-            var mappedRigid = mapper.MapRigid(rigid, report);
+
+            sink.Begin("Развёртка", flex.Count + rigid.Count);
+            var mappedFlex = mapper.MapFlex(flex, report, sink);
+            var mappedRigid = mapper.MapRigid(rigid, report, sink);
+            sink.End();
+
             IList<double> seams = mapper.Seams;
 
             var decoration = new GostDecorator(db, tr, model.Settings).Build(line, frame, seams);
 
             StripBlockBuilder.Build(db, tr, model, mappedFlex, mappedRigid, decoration,
-                ProfileViewAnchor.Compute(view, model.Settings));
+                ProfileViewAnchor.Compute(view, model.Settings), sink);
 
             StripStore.Save(db, tr, model);
             return report;

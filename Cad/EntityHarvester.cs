@@ -25,16 +25,19 @@ namespace AbrCivil.PlanStrip.Cad
         private readonly StripFrame _frame;
         private readonly StripSettings _settings;
         private readonly HarvestReport _report;
+        private readonly IProgressSink _sink;
         private readonly PrimitiveConverter _primitives;
         private readonly CivilConverter _civil;
 
         public EntityHarvester(
-            ICenterline line, StripFrame frame, StripSettings settings, HarvestReport report)
+            ICenterline line, StripFrame frame, StripSettings settings,
+            HarvestReport report, IProgressSink sink)
         {
             _line = line;
             _frame = frame;
             _settings = settings;
             _report = report;
+            _sink = sink;
             _primitives = new PrimitiveConverter(settings.SagTolerance, report);
             _civil = new CivilConverter(settings.SagTolerance, report);
         }
@@ -50,7 +53,12 @@ namespace AbrCivil.PlanStrip.Cad
             var ms = (BlockTableRecord)tr.GetObject(
                 SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForRead);
 
+            int topLevelCount = 0;
+            foreach (ObjectId unused in ms) topLevelCount++;
+
+            _sink.Begin("Сбор объектов", topLevelCount);
             Walk(db, tr, ms, Matrix3d.Identity, null, box, flex, rigid, 0);
+            _sink.End();
         }
 
         private void Walk(
@@ -60,6 +68,8 @@ namespace AbrCivil.PlanStrip.Cad
         {
             foreach (ObjectId id in btr)
             {
+                if (depth == 0) _sink.Tick();
+
                 var entity = tr.GetObject(id, OpenMode.ForRead) as Entity;
                 if (entity == null) continue;
                 if (!entity.Visible) continue;
