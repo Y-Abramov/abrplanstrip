@@ -1,0 +1,7 @@
+{
+  "name": "abr-svodplan",
+  "version": "1.0.0",
+  "caption": "Развёртка плана",
+  "description": "Спрямление ситуационного плана трассы для полосы над сеткой продольного профиля.",
+  "author": "Yaroslav I. Abramov"
+}

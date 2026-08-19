@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0"
+                    AutodeskProduct="AutoCAD"
+                    ProductType="Application"
+                    Name="AbrPlanStrip"
+                    AppVersion="{VERSION}"
+                    Description="ABR | CIVIL: развёртка плана трассы"
+                    Author="Yaroslav I. Abramov"
+                    ProductCode="1a0005a9-fe7d-4234-b564-0012966354b4"
+                    UpgradeCode="be1f5354-5315-4b86-b39b-46c8378d86b4">
+  <CompanyDetails Name="ABR" Url="https://abrmove.ru" />
+  <Components Description="Civil 3D 2024">
+    <RuntimeRequirements OS="Win64" Platform="Civil3D" SeriesMin="R24.3" SeriesMax="R24.3" />
+    <ComponentEntry AppName="AbrPlanStrip" Version="{VERSION}" ModuleName="./Contents/2024/{ASSEMBLY}.dll"
+                    LoadOnAutoCADStartup="True" AppDescription="ABR | CIVIL" />
+  </Components>
+  <Components Description="Civil 3D 2026">
+    <RuntimeRequirements OS="Win64" Platform="Civil3D" SeriesMin="R25.1" SeriesMax="R25.1" />
+    <ComponentEntry AppName="AbrPlanStrip" Version="{VERSION}" ModuleName="./Contents/2026/{ASSEMBLY}.dll"
+                    LoadOnAutoCADStartup="True" AppDescription="ABR | CIVIL" />
+  </Components>
+</ApplicationPackage>
