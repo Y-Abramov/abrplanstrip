@@ -60,12 +60,14 @@ namespace AbrCivil.PlanStrip.Core.Geom
             }
         }
 
-        public List<FlexShape> MapFlex(IList<FlexShape> source, HarvestReport report)
+        public List<FlexShape> MapFlex(IList<FlexShape> source, HarvestReport report, IProgressSink sink = null)
         {
+            sink = sink ?? NullProgress.Instance;
             var result = new List<FlexShape>();
 
             foreach (var shape in source)
             {
+                sink.Tick();
                 if (shape.Points == null || shape.Points.Length < 2) continue;
 
                 int before = result.Count;
@@ -89,12 +91,14 @@ namespace AbrCivil.PlanStrip.Core.Geom
             return result;
         }
 
-        public List<RigidShape> MapRigid(IList<RigidShape> source, HarvestReport report)
+        public List<RigidShape> MapRigid(IList<RigidShape> source, HarvestReport report, IProgressSink sink = null)
         {
+            sink = sink ?? NullProgress.Instance;
             var result = new List<RigidShape>();
 
             foreach (var shape in source)
             {
+                sink.Tick();
                 Pt2 strip;
                 double rotation;
 
