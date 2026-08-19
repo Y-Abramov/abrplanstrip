@@ -37,9 +37,10 @@ namespace AbrCivil.PlanStrip
             var panel = AbrRibbon.EnsurePanel(tab, "ABR_CIVIL_PLANSTRIP_PANEL", "Развёртка плана");
             panel.Source.Items.Add(AbrRibbon.MakeButton("Развёртка", "PLANSTRIP", "planstrip_build"));
             panel.Source.Items.Add(AbrRibbon.MakeButton("Обновить", "PLANSTRIPUPDATE", "planstrip_update"));
-            panel.Source.Items.Add(AbrRibbon.MakeButton("Удалить", "PLANSTRIPERASE", "planstrip_erase"));
-            panel.Source.Items.Add(AbrRibbon.MakeButton("Наборы оформления", "PLANSTRIPSETTINGS", "planstrip_settings"));
-            panel.Source.Items.Add(AbrRibbon.MakeButton("О модуле", "PLANSTRIPABOUT", "planstrip_about"));
+            panel.Source.Items.Add(AbrRibbon.MakeColumn(
+                AbrRibbon.MakeSmallButton("Удалить", "PLANSTRIPERASE", "planstrip_erase"),
+                AbrRibbon.MakeSmallButton("Наборы оформления", "PLANSTRIPSETTINGS", "planstrip_settings"),
+                AbrRibbon.MakeSmallButton("О модуле", "PLANSTRIPABOUT", "planstrip_about")));
         }
 
         [CommandMethod("PLANSTRIPABOUT")]
