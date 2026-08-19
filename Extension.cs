@@ -4,6 +4,7 @@ using Abr.Civil.Sdk;
 using AbrCivil.PlanStrip.Cad;
 using AbrCivil.PlanStrip.Core.Model;
 using AbrCivil.PlanStrip.Core.Presets;
+using AbrCivil.PlanStrip.Core.Report;
 using AbrCivil.PlanStrip.Ui;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -121,8 +122,17 @@ namespace AbrCivil.PlanStrip
                     };
                     model.BlockName = StripService.MakeBlockName(model.AlignmentName, view.StationStart, view.StationEnd);
 
-                    var result = StripService.Build(db, tr, model);
-                    report = result.ToText();
+                    try
+                    {
+                        var result = StripService.Build(db, tr, model, new AcadProgress());
+                        report = result.ToText();
+                    }
+                    catch (PlanStripCanceledException)
+                    {
+                        ed.WriteMessage("\nПостроение отменено.");
+                        tr.Abort();
+                        return;
+                    }
                 }
 
                 tr.Commit();
@@ -147,37 +157,51 @@ namespace AbrCivil.PlanStrip
             if (per.Status != PromptStatus.OK && per.Status != PromptStatus.None) return;
 
             string report = null;
+            var sink = new AcadProgress();
 
             using (doc.LockDocument())
             using (var tr = db.TransactionManager.StartTransaction())
             {
-                if (per.Status == PromptStatus.None)
+                try
                 {
-                    var sb = new System.Text.StringBuilder();
-                    var models = StripStore.LoadAll(db, tr);
-
-                    if (models.Count == 0)
+                    if (per.Status == PromptStatus.None)
                     {
-                        ed.WriteMessage("\nВ чертеже нет полос.");
+                        var sb = new System.Text.StringBuilder();
+                        var models = StripStore.LoadAll(db, tr);
+
+                        if (models.Count == 0)
+                        {
+                            ed.WriteMessage("\nВ чертеже нет полос.");
+                        }
+                        else
+                        {
+                            foreach (var model in models)
+                            {
+                                var scoped = new ScopedProgress(sink, "«" + model.BlockName + "»: ");
+                                sb.AppendLine(model.BlockName + ":").AppendLine(
+                                    StripService.Build(db, tr, model, scoped).ToText());
+                            }
+                            report = sb.ToString();
+                        }
                     }
                     else
                     {
-                        foreach (var model in models)
-                            sb.AppendLine(model.BlockName + ":").AppendLine(StripService.Build(db, tr, model).ToText());
-                        report = sb.ToString();
+                        var model = ResolveSelectedModel(db, tr, per.ObjectId);
+                        if (model == null)
+                        {
+                            ed.WriteMessage("\nВыбранный объект - не часть полосы.");
+                        }
+                        else
+                        {
+                            report = StripService.Build(db, tr, model, sink).ToText();
+                        }
                     }
                 }
-                else
+                catch (PlanStripCanceledException)
                 {
-                    var model = ResolveSelectedModel(db, tr, per.ObjectId);
-                    if (model == null)
-                    {
-                        ed.WriteMessage("\nВыбранный объект - не часть полосы.");
-                    }
-                    else
-                    {
-                        report = StripService.Build(db, tr, model).ToText();
-                    }
+                    ed.WriteMessage("\nПостроение отменено.");
+                    tr.Abort();
+                    return;
                 }
 
                 tr.Commit();
